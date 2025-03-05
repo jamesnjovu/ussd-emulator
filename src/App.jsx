@@ -19,53 +19,12 @@ const sendUSSDRequest = async (apiUrl, payload) => {
   } catch (error) {
     console.error('USSD Request Error:', error);
     return {
-      Message: error instanceof Error
+      message: error instanceof Error
         ? `Error: ${error.message}`
         : 'An unexpected error occurred',
-      key: 'END' // End session on error
+      session: 'END' // End session on error
     };
   }
-};
-
-// Mock response generator
-const generateMockResponse = (input) => {
-  // Initial menu
-  if (input === '*123#') {
-    return {
-      Message: "Welcome to Mobile Banking\n1. Check Balance\n2. Transfer Money\n3. Buy Airtime\n4. Bill Payment\n5. Exit",
-      key: "CON"
-    };
-  }
-
-  // Balance inquiry
-  if (input === '1') {
-    return {
-      Message: "Your current balance is: $1,234.56\nAvailable funds: $1,200.00\n0. Back to Main Menu\n#. Exit",
-      key: "CON"
-    };
-  }
-
-  // Transfer money flow
-  if (input === '2') {
-    return {
-      Message: "Transfer Money\nEnter recipient's mobile number:",
-      key: "CON"
-    };
-  }
-
-  // Exit
-  if (input.includes('#')) {
-    return {
-      Message: "Thank you for using Mobile Banking. Goodbye!",
-      key: "END" // Ends session
-    };
-  }
-
-  // Default fallback
-  return {
-    Message: "Invalid selection. Please try again.\n0. Back to Main Menu\n#. Exit",
-    key: "CON"
-  };
 };
 
 function App() {
@@ -159,7 +118,7 @@ const DocumentationPage = ({ navigateTo }) => {
             <div className="bg-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
               {`{
   "message": "string", // The text to display to the user
-  "session": "string"  // Session state: "C" for continuing, any other value to end
+  "session": "string"  // Session state: "CON" for continuing, any other value to end
 }`}
             </div>
 
@@ -167,8 +126,8 @@ const DocumentationPage = ({ navigateTo }) => {
               <h3 className="font-semibold">Notes:</h3>
               <ul className="list-disc pl-5 mt-2 space-y-1">
                 <li>The <code>message</code> field supports line breaks using "\n" characters</li>
-                <li>When <code>session</code> is "C", the emulator will show an input field for the user's response</li>
-                <li>When <code>session</code> is any value other than "C", the emulator will display only an "End" button</li>
+                <li>When <code>session</code> is "CON", the emulator will show an input field for the user's response</li>
+                <li>When <code>session</code> is any value other than "CON", the emulator will display only an "End" button</li>
                 <li>To create menus, include numbered options in the <code>message</code> field (e.g., "1. Check Balance\n2. Transfer Money")</li>
               </ul>
             </div>
@@ -194,7 +153,7 @@ const DocumentationPage = ({ navigateTo }) => {
               <div className="bg-gray-100 p-3 rounded-lg font-mono text-sm mt-2 overflow-x-auto">
                 {`{
   "message": "Welcome to USSD Service\\n1. Check Balance\\n2. Transfer Money\\n3. Buy Airtime",
-  "session": "C"
+  "session": "CON"
 }`}
               </div>
             </div>
@@ -283,9 +242,13 @@ const USSDEmulator = ({ navigateTo }) => {
     setIsLoading(true);
 
     try {
+      // Split input into service code and entered number
+      const serviceCodeMatch = input.match(/^(\*\d+)(.*)$/);
+
       const payload = {
         mobile_number: mobileNumber,
-        text: input,
+        service_code: serviceCodeMatch ? serviceCodeMatch[1] : input,
+        input: serviceCodeMatch ? serviceCodeMatch[2] || '' : '',
         session_id: sessionId
       };
 
@@ -308,8 +271,8 @@ const USSDEmulator = ({ navigateTo }) => {
 
   // Handle API response
   const handleResponse = (response) => {
-    setModalMessage(response.Message);
-    setModalSession(response.Key);
+    setModalMessage(response.message);
+    setModalSession(response.session);
     setModalVisible(true);
     setModalInput('');
   };
@@ -317,7 +280,13 @@ const USSDEmulator = ({ navigateTo }) => {
   // Send button handler
   const handleSend = () => {
     if (screenInput) {
+      // If the input starts with *, it's a service code
+    if (screenInput.startsWith('*')) {
       sendRequest(screenInput);
+    } else {
+      // If no service code is active, append to existing input
+      sendRequest(screenInput);
+    }
     }
   };
 
