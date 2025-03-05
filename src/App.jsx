@@ -19,10 +19,10 @@ const sendUSSDRequest = async (apiUrl, payload) => {
   } catch (error) {
     console.error('USSD Request Error:', error);
     return {
-      message: error instanceof Error
+      Message: error instanceof Error
         ? `Error: ${error.message}`
         : 'An unexpected error occurred',
-      session: '' // End session on error
+      key: 'END' // End session on error
     };
   }
 };
@@ -32,39 +32,39 @@ const generateMockResponse = (input) => {
   // Initial menu
   if (input === '*123#') {
     return {
-      message: "Welcome to Mobile Banking\n1. Check Balance\n2. Transfer Money\n3. Buy Airtime\n4. Bill Payment\n5. Exit",
-      session: "C"
+      Message: "Welcome to Mobile Banking\n1. Check Balance\n2. Transfer Money\n3. Buy Airtime\n4. Bill Payment\n5. Exit",
+      key: "CON"
     };
   }
 
   // Balance inquiry
   if (input === '1') {
     return {
-      message: "Your current balance is: $1,234.56\nAvailable funds: $1,200.00\n0. Back to Main Menu\n#. Exit",
-      session: "C"
+      Message: "Your current balance is: $1,234.56\nAvailable funds: $1,200.00\n0. Back to Main Menu\n#. Exit",
+      key: "CON"
     };
   }
 
   // Transfer money flow
   if (input === '2') {
     return {
-      message: "Transfer Money\nEnter recipient's mobile number:",
-      session: "C"
+      Message: "Transfer Money\nEnter recipient's mobile number:",
+      key: "CON"
     };
   }
 
   // Exit
   if (input.includes('#')) {
     return {
-      message: "Thank you for using Mobile Banking. Goodbye!",
-      session: "" // Ends session
+      Message: "Thank you for using Mobile Banking. Goodbye!",
+      key: "END" // Ends session
     };
   }
 
   // Default fallback
   return {
-    message: "Invalid selection. Please try again.\n0. Back to Main Menu\n#. Exit",
-    session: "C"
+    Message: "Invalid selection. Please try again.\n0. Back to Main Menu\n#. Exit",
+    key: "CON"
   };
 };
 
@@ -285,7 +285,7 @@ const USSDEmulator = ({ navigateTo }) => {
     try {
       const payload = {
         mobile_number: mobileNumber,
-        input: input,
+        text: input,
         session_id: sessionId
       };
 
@@ -300,7 +300,7 @@ const USSDEmulator = ({ navigateTo }) => {
       // Uncomment below for actual API implementation
     } catch (error) {
       setModalMessage('Error connecting to the service. Please try again.');
-      setModalSession('');
+      setModalSession('END');
       setModalVisible(true);
       setIsLoading(false);
     }
@@ -308,8 +308,8 @@ const USSDEmulator = ({ navigateTo }) => {
 
   // Handle API response
   const handleResponse = (response) => {
-    setModalMessage(response.message);
-    setModalSession(response.session);
+    setModalMessage(response.Message);
+    setModalSession(response.Key);
     setModalVisible(true);
     setModalInput('');
   };
@@ -428,7 +428,7 @@ const USSDEmulator = ({ navigateTo }) => {
                   {modalMessage}
                 </div>
 
-                {modalSession === "C" ? (
+                {modalSession !== "END" ? (
                   <>
                     <input
                       type="text"
