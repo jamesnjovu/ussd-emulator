@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import HomePage from './components/HomePage'
 import DocumentationPage from './components/Documentation'
-
+import USSDEmulator from './components/UssdEmulator'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');

@@ -13,7 +13,18 @@ const sendUSSDRequest = async (apiUrl, payload) => {
             throw new Error(`HTTP error! status: ${response.status}, message: ${errorBody}`);
         }
 
-        return await response.json();
+        // Get the Freeflow header value
+        const freeflowHeader = response.headers.get('Freeflow');
+        
+        // Parse response text
+        const responseText = await response.text();
+        
+        // Return formatted response object based on Freeflow header
+        return {
+            message: responseText,
+            // If Freeflow is FC (continue), set session to CON, otherwise END
+            session: freeflowHeader === 'FC' ? 'CON' : 'END'
+        };
     } catch (error) {
         console.error('USSD Request Error:', error);
         return {
