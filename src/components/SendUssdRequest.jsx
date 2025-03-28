@@ -1,6 +1,6 @@
 /**
  * USSD Request Handler
- * 
+ *
  * Handles the communication between the USSD emulator and the backend API.
  * Manages response formatting, error handling, and session state.
  */
@@ -15,16 +15,13 @@ const sendUSSDRequest = async (apiUrl, payload) => {
     while (attempts < maxAttempts) {
         try {
             attempts++;
-            
+
             // If this is the second attempt, use a CORS proxy
             if (useCorsProxy && !apiUrl.includes('corsproxy.io')) {
                 corsProxyUrl = `https://corsproxy.io/?url=${apiUrl}`;
-                console.log('Trying with CORS proxy:', corsProxyUrl);
             }
-            
+
             const urlToUse = corsProxyUrl || apiUrl;
-            console.log('Sending USSD request to:', urlToUse);
-            console.log('Payload:', payload);
 
             // Add request timeout after 15 seconds
             const controller = new AbortController();
@@ -38,20 +35,11 @@ const sendUSSDRequest = async (apiUrl, payload) => {
                 },
                 body: JSON.stringify(payload),
                 signal: controller.signal,
-                // Add mode 'cors' explicitly (this is the default, but being explicit)
-                mode: 'no-cors',
-                // Add credentials mode
                 credentials: 'same-origin',
             });
-            
-            console.log('Response', response);
 
             // Clear the timeout
             clearTimeout(timeoutId);
-
-            // Log response headers for debugging
-            console.log('Response status:', response.status);
-            console.log('Response headers:', [...response.headers.entries()]);
 
             // Check for Freeflow header (case insensitive)
             let freeflowHeader = null;
@@ -72,7 +60,6 @@ const sendUSSDRequest = async (apiUrl, payload) => {
 
             // Parse response text
             const responseText = await response.text();
-            console.log('Response body:', responseText);
 
             // If response is not OK, handle error but continue flow if possible
             if (!response.ok) {
@@ -94,7 +81,6 @@ const sendUSSDRequest = async (apiUrl, payload) => {
 
             // If this is the first attempt and it failed, try with CORS proxy
             if (attempts === 1) {
-                console.log('First attempt failed, trying with CORS proxy...');
                 useCorsProxy = true;
                 continue;
             }
