@@ -39,10 +39,12 @@ const sendUSSDRequest = async (apiUrl, payload) => {
                 body: JSON.stringify(payload),
                 signal: controller.signal,
                 // Add mode 'cors' explicitly (this is the default, but being explicit)
-                mode: 'cors',
+                mode: 'no-cors',
                 // Add credentials mode
                 credentials: 'same-origin',
             });
+            
+            console.log('Response', response);
 
             // Clear the timeout
             clearTimeout(timeoutId);

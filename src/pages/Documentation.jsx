@@ -131,17 +131,17 @@ const DocumentationPage = ({ navigateTo }) => {
                                     <p className="mb-2">The emulator sends POST requests to the API URL you provide during setup with the following JSON payload:</p>
                                     <div className="bg-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
                                         {`{
-  "mobile_number": "string", // The mobile number entered during setup
+  "msisdn": "string", // The mobile number entered during setup
   "input": "string",         // The USSD code or response entered by the user
-  "session_id": "string"     // A unique session identifier for the current session
+  "sessionId": "string"     // A unique session identifier for the current session
 }`}
                                     </div>
 
                                     <div className="mt-4">
                                         <h3 className="font-semibold">Notes:</h3>
                                         <ul className="list-disc pl-5 mt-2 space-y-1">
-                                            <li>The <code className="bg-gray-100 px-1 rounded">session_id</code> remains consistent throughout a single USSD session</li>
-                                            <li>A new <code className="bg-gray-100 px-1 rounded">session_id</code> is generated when a session ends or is canceled</li>
+                                            <li>The <code className="bg-gray-100 px-1 rounded">sessionId</code> remains consistent throughout a single USSD session</li>
+                                            <li>A new <code className="bg-gray-100 px-1 rounded">sessionId</code> is generated when a session ends or is canceled</li>
                                             <li>The <code className="bg-gray-100 px-1 rounded">input</code> field contains the USSD code (e.g., "*123#") for the initial request</li>
                                             <li>For subsequent requests, <code className="bg-gray-100 px-1 rounded">input</code> contains the user's response to the previous prompt</li>
                                         </ul>
@@ -214,9 +214,9 @@ response = %{
                                         <div className="bg-gray-100 p-3 rounded-lg font-mono text-sm mt-2 overflow-x-auto">
                                             {`POST /your-api-endpoint
 {
-  "mobile_number": "1234567890",
+  "msisdn": "1234567890",
   "input": "*123#",
-  "session_id": "ussd-abc123"
+  "sessionId": "ussd-abc123"
 }`}
                                         </div>
                                     </div>
@@ -240,9 +240,9 @@ Welcome to USSD Service
                                         <div className="bg-gray-100 p-3 rounded-lg font-mono text-sm mt-2 overflow-x-auto">
                                             {`POST /your-api-endpoint
 {
-  "mobile_number": "1234567890",
+  "msisdn": "1234567890",
   "input": "1",
-  "session_id": "ussd-abc123"
+  "sessionId": "ussd-abc123"
 }`}
                                         </div>
                                     </div>
@@ -293,7 +293,7 @@ Your current balance is $100.00`}
                                                 <li>
                                                     <span className="font-medium">Manually use a CORS proxy in your API URL:</span>
                                                     <pre className="bg-gray-800 text-white p-3 rounded-md text-sm mt-1 overflow-x-auto">
-                                                        https://corsproxy.io/?https://your-api.com/ussd
+                                                        https://corsproxy.io/?url=https://your-api.com/ussd
                                                     </pre>
                                                 </li>
                                                 <li>
