@@ -87,9 +87,9 @@ const USSDEmulator = ({ navigateTo }) => {
         try {
             // Format payload for the API
             const payload = {
-                mobile_number: mobileNumber,
+                msisdn: mobileNumber,
                 input: input,
-                session_id: sessionId
+                sessionId: sessionId
             };
 
             // Keep track of the input for session history
