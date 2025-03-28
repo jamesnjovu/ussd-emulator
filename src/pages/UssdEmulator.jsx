@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import sendUSSDRequest from './SendUssdRequest';
+import sendUSSDRequest from '../components/SendUssdRequest';
+import validatePhoneNumber from '../components/ValidatePhoneNumber';
 import { v4 as uuidv4 } from 'uuid';
 
 const USSDEmulator = ({ navigateTo }) => {
@@ -21,10 +22,20 @@ const USSDEmulator = ({ navigateTo }) => {
     const [fadeIn, setFadeIn] = useState(false);
     const [isKeypadAnimating, setIsKeypadAnimating] = useState(false);
     const [lastPressedKey, setLastPressedKey] = useState(null);
+    const [phoneError, setPhoneError] = useState('');
+    const [useCorsProxy, setUseCorsProxy] = useState(false);
+
 
     // Generate new session ID
     const generateSessionId = () => {
         return `ussd-${uuidv4().substring(0, 8)}`;
+    };
+
+    const getApiUrlWithProxy = (url) => {
+        if (useCorsProxy && !url.includes('corsproxy.io')) {
+            return `https://corsproxy.io/?url=${url}`;
+        }
+        return url;
     };
 
     // Initialize session ID on component mount
@@ -50,15 +61,22 @@ const USSDEmulator = ({ navigateTo }) => {
 
     // Handle configuration setup
     const handleSetup = () => {
-        if (!apiUrl || !mobileNumber) {
-            alert('Please enter both API URL and mobile number');
+        if (!apiUrl) {
+            alert('Please enter API URL');
             return;
         }
-        
+
         if (!validateUrl(apiUrl)) {
             return;
         }
-        
+
+        const phoneValidation = validatePhoneNumber(mobileNumber);
+        if (!phoneValidation.valid) {
+            setPhoneError(phoneValidation.message);
+            return;
+        }
+
+        setPhoneError('');
         setIsConfigured(true);
     };
 
@@ -66,12 +84,12 @@ const USSDEmulator = ({ navigateTo }) => {
     const handleNumpadClick = (value) => {
         setLastPressedKey(value);
         setIsKeypadAnimating(true);
-        
+
         setTimeout(() => {
             setIsKeypadAnimating(false);
             setLastPressedKey(null);
         }, 300);
-        
+
         setScreenInput(prev => prev + value);
     };
 
@@ -92,7 +110,6 @@ const USSDEmulator = ({ navigateTo }) => {
                 sessionId: sessionId
             };
 
-            // Keep track of the input for session history
             if (sessionHistory.length === 0 || input.startsWith('*')) {
                 // Start a new session if first request or when a new USSD code is entered
                 setSessionHistory([input]);
@@ -101,9 +118,12 @@ const USSDEmulator = ({ navigateTo }) => {
                 setSessionHistory([...sessionHistory, input]);
             }
 
-            const response = await sendUSSDRequest(apiUrl, payload);
+            // Use the proxy URL if enabled
+            const effectiveUrl = getApiUrlWithProxy(apiUrl);
+
+            const response = await sendUSSDRequest(effectiveUrl, payload);
             handleResponse(response);
-        } catch (error) {
+        } catch (_error) {
             setModalMessage('Error connecting to the service. Please try again.');
             setModalSession('END');
             setModalVisible(true);
@@ -163,7 +183,7 @@ const USSDEmulator = ({ navigateTo }) => {
                 <meta name="keywords" content="USSD emulator, USSD testing, phone emulator, mobile testing, API testing, USSD code, USSD development" />
                 <link rel="canonical" href="https://jamesnjovu.github.io/ussd-emulator/emulator" />
                 <script type="application/ld+json">
-                {`
+                    {`
                     {
                       "@context": "https://schema.org",
                       "@type": "SoftwareApplication",
@@ -220,16 +240,51 @@ const USSDEmulator = ({ navigateTo }) => {
                             />
                             {urlError && <p id="url-error" className="mt-1 text-sm text-red-500">{urlError}</p>}
                         </div>
+                        <div className="mb-4 flex items-center">
+                            <input
+                                id="use-cors-proxy"
+                                type="checkbox"
+                                checked={useCorsProxy}
+                                onChange={(e) => setUseCorsProxy(e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label htmlFor="use-cors-proxy" className="ml-2 block text-sm text-gray-700">
+                                Use CORS proxy (for cross-origin issues)
+                            </label>
+                            <button
+                                type="button"
+                                className="ml-2 text-blue-600 hover:text-blue-800 text-sm"
+                                onClick={() => alert("If your API server doesn't allow cross-origin requests, enable this option to use a proxy that adds CORS headers. This option is especially useful when the emulator is hosted on a different domain than your API.")}
+                            >
+                                ?
+                            </button>
+                        </div>
                         <div className="mb-6">
                             <label htmlFor="mobile-number" className="block text-sm font-medium mb-2 text-gray-700">Mobile Number</label>
                             <input
                                 id="mobile-number"
                                 type="text"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+                                className={`w-full p-3 border ${phoneError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300`}
                                 value={mobileNumber}
-                                onChange={(e) => setMobileNumber(e.target.value)}
-                                placeholder="260978921730"
+                                onChange={(e) => {
+                                    setMobileNumber(e.target.value);
+                                    if (e.target.value) {
+                                        const validation = validatePhoneNumber(e.target.value);
+                                        setPhoneError(validation.valid ? '' : validation.message);
+                                    } else {
+                                        setPhoneError('');
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (mobileNumber) {
+                                        const validation = validatePhoneNumber(mobileNumber);
+                                        setPhoneError(validation.valid ? '' : validation.message);
+                                    }
+                                }}
+                                placeholder="+260978921730"
+                                aria-describedby="phone-error"
                             />
+                            {phoneError && <p id="phone-error" className="mt-1 text-sm text-red-500">{phoneError}</p>}
                         </div>
                         <button
                             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 font-medium text-lg"
@@ -274,7 +329,7 @@ const USSDEmulator = ({ navigateTo }) => {
                             <div className="bg-gray-50 p-4 h-28 flex items-center justify-center border-b relative transition-all duration-300" aria-live="polite">
                                 <p className="text-lg font-mono break-all transition-all duration-300">{screenInput}</p>
                                 {screenInput && (
-                                    <button 
+                                    <button
                                         onClick={handleClear}
                                         className="absolute right-2 top-2 text-gray-500 hover:text-gray-700 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-300 hover:bg-gray-300"
                                         aria-label="Clear input"
@@ -289,6 +344,14 @@ const USSDEmulator = ({ navigateTo }) => {
                                 <div className="bg-white px-4 py-2 border-b text-xs text-gray-500 animate-fadeIn">
                                     <p className="font-semibold">Session: {sessionId.substring(0, 8)}...</p>
                                     <p className="truncate">History: {sessionHistory.join(' → ')}</p>
+                                </div>
+                            )}
+                            {useCorsProxy && (
+                                <div className="bg-blue-50 px-4 py-2 border-b text-xs text-blue-600 flex items-center animate-fadeIn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                                        <path fillRule="evenodd" d="M9.29 3.443a1 1 0 0 1 1.42 0l5.25 5.5a1 1 0 0 1 0 1.414l-5.25 5.5a1 1 0 0 1-1.42-1.414L13.67 10 9.29 4.657a1 1 0 0 1 0-1.414Z" clipRule="evenodd" />
+                                    </svg>
+                                    <p>Using CORS proxy: {getApiUrlWithProxy(apiUrl)}</p>
                                 </div>
                             )}
 

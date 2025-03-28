@@ -1,0 +1,26 @@
+
+const validatePhoneNumber = (phoneNumber) => {
+    // Basic validation: must have country code and be 10-15 digits
+    const regex = /^\+?[0-9]{1,4}[0-9]{7,14}$/;
+
+    if (!phoneNumber) {
+        return { valid: false, message: 'Phone number is required' };
+    }
+
+    // Check for plus sign at the beginning
+    if (!phoneNumber.startsWith('+')) {
+        // Auto-add plus sign if it's missing
+        phoneNumber = '+' + phoneNumber;
+        setMobileNumber(phoneNumber);
+    }
+
+    if (!regex.test(phoneNumber)) {
+        return {
+            valid: false,
+            message: 'Enter a valid phone number with country code (e.g., +260978921730)'
+        };
+    }
+
+    return { valid: true, message: '' };
+};
+export default validatePhoneNumber;

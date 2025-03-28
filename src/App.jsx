@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import HomePage from './components/HomePage';
-import DocumentationPage from './components/Documentation';
-import USSDEmulator from './components/UssdEmulator';
-import NotFoundPage from './components/NotFoundPage';
+import HomePage from './pages/HomePage';
+import DocumentationPage from './pages/Documentation';
+import USSDEmulator from './pages/UssdEmulator';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
