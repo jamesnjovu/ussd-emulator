@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/ussd-emulator/sw.js', { scope: '/ussd-emulator/' })})}
